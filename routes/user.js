@@ -7,13 +7,26 @@ const {
 } = require("../controllers/user");
 const { check } = require("express-validator");
 const { validateFields } = require("../middlewares/validate-fields");
-const { isRoleValid } = require("../helpers/db-validators");
+const {
+  isRoleValid,
+  isexistEmail,
+  isexistUserById,
+} = require("../helpers/db-validators");
 
 const router = Router();
 
 router.get("/", usersGet);
 
-router.put("/:id", userUpdate);
+router.put(
+  "/:id",
+  [
+    check("id", "Not a valid MongoDB ID").isMongoId(),
+    check("id").custom(isexistUserById),
+    check("role").custom(isRoleValid),
+    validateFields,
+  ],
+  userUpdate
+);
 
 router.post(
   "/",
@@ -25,11 +38,20 @@ router.post(
     }),
     // check("role", "Role is not valid").isIn(["ADMIN_ROLE", "USER_ROLE"]),
     check("role").custom(isRoleValid),
+    check("email").custom(isexistEmail),
     validateFields,
   ],
   userCreate
 );
 
-router.delete("/", userDelete);
+router.delete(
+  "/:id",
+  [
+    check("id", "Not a valid MongoDB ID").isMongoId(),
+    check("id").custom(isexistUserById),
+    validateFields,
+  ],
+  userDelete
+);
 
 module.exports = router;
